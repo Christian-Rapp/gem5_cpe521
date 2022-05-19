@@ -81,6 +81,8 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
       cpuSidePort (p.name + ".cpu_side_port", this, "CpuSidePort"),
       memSidePort(p.name + ".mem_side_port", this, "MemSidePort"),
       mshrQueue("MSHRs", p.mshrs, 0, p.demand_mshr_reserve, p.name),
+      mshrEvent([this]{ updateMSHRCosts(); },
+                name(), false, EventBase::Delayed_Writeback_Pri),
       writeBuffer("write buffer", p.write_buffers, p.mshrs, p.name),
       tags(p.tags),
       compressor(p.compressor),
@@ -139,6 +141,13 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
 BaseCache::~BaseCache()
 {
     delete tempBlock;
+}
+
+void
+BaseCache::startup()
+{
+    DPRINTF(Cache, "Running startup and scheduling MSHR event...\n");
+    schedule(mshrEvent, curTick());
 }
 
 void

@@ -763,4 +763,9 @@ MSHR::conflictAddr(const QueueEntry* entry) const
     return entry->matchBlockAddr(blkAddr, isSecure);
 }
 
+void
+MSHR::update_mlp_cost() {
+    mlp_cost += (1 / targets.size());
+}
+
 } // namespace gem5

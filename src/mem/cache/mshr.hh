@@ -118,6 +118,9 @@ class MSHR : public QueueEntry, public Printable
     /** Did we snoop a read while waiting for data? */
     bool postDowngrade;
 
+    /** Track the cost associated with the request in the MSHR */
+    float mlp_cost;
+
   public:
 
     /** Track if we sent this as a whole line write or not */
@@ -340,6 +343,12 @@ class MSHR : public QueueEntry, public Printable
     bool allocOnFill() const {
         return targets.allocOnFill;
     }
+
+    void init_mlp_cost() {
+        mlp_cost = 0;
+    }
+
+    void update_mlp_cost();
 
     /**
      * Determine if there are non-deferred requests from other caches

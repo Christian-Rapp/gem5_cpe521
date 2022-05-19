@@ -161,6 +161,8 @@ class MSHRQueue : public Queue<MSHR>
         // keep regressions unchanged
         return (allocated < numEntries - (numReserve + 1 + demandReserve));
     }
+
+    void updateMSHRCosts();
 };
 
 } // namespace gem5

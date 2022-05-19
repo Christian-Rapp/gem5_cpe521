@@ -75,6 +75,9 @@ MSHRQueue::allocate(Addr blk_addr, unsigned blk_size, PacketPtr pkt,
     mshr->allocIter = allocatedList.insert(allocatedList.end(), mshr);
     mshr->readyIter = addToReadyList(mshr);
 
+    // Initialize mlp cost metric for the new MSHR
+    mshr->init_mlp_cost();
+
     allocated += 1;
     return mshr;
 }
@@ -146,6 +149,14 @@ MSHRQueue::forceDeallocateTarget(MSHR *mshr)
 
     // Notify if MSHR queue no longer full
     return was_full && !isFull();
+}
+
+void
+MSHRQueue::updateMSHRCosts()
+{
+    for (const auto& entry : allocatedList) {
+        entry->update_mlp_cost();
+    }
 }
 
 } // namespace gem5

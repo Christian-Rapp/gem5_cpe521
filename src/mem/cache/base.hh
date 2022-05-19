@@ -343,6 +343,16 @@ class BaseCache : public ClockedObject
     /** Miss status registers */
     MSHRQueue mshrQueue;
 
+    void updateMSHRCosts() {
+        DPRINTF(Cache, "Updating MSHR costs at time %d...\n", curTick());
+        mshrQueue.updateMSHRCosts();
+        schedule(mshrEvent, curTick()+1);
+    }
+
+    EventFunctionWrapper mshrEvent;
+
+    void startup();
+
     /** Write/writeback buffer */
     WriteQueue writeBuffer;
 
