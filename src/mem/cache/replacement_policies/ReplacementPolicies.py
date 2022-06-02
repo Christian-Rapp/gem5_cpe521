@@ -48,6 +48,26 @@ class DuelingRP(BaseReplacementPolicy):
     replacement_policy_b = Param.BaseReplacementPolicy(
         "Sub-replacement policy B")
 
+class TSelRP(BaseReplacementPolicy):
+    type = 'TSelRP'
+    cxx_class = 'gem5::replacement_policy::TSel'
+    cxx_header = "mem/cache/replacement_policies/tsel_rp.hh"
+
+    # Auxiliary Indexing Policies
+    index_policy_a = Param.BaseIndexingPolicy(
+        "Auxiliary indexing policy A")
+    index_policy_b = Param.BaseIndexingPolicy(
+        "Auxiliary indexing policy B")
+
+    # Replacement Policies for TSel
+    replacement_policy_a = Param.BaseReplacementPolicy(
+        "Sub-replacement policy A")
+    replacement_policy_b = Param.BaseReplacementPolicy(
+        "Sub-replacement policy B")
+
+    # Number of counter bits
+    num_bits = Param.Int(3, "Number of counter bits")
+
 class FIFORP(BaseReplacementPolicy):
     type = 'FIFORP'
     cxx_class = 'gem5::replacement_policy::FIFO'
