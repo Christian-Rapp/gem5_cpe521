@@ -66,7 +66,7 @@ class TSelRP(BaseReplacementPolicy):
         "Sub-replacement policy B")
 
     # Number of counter bits
-    num_bits = Param.Int(3, "Number of counter bits")
+    num_counter_bits = Param.Int(3, "Number of counter bits")
 
 class FIFORP(BaseReplacementPolicy):
     type = 'FIFORP'
