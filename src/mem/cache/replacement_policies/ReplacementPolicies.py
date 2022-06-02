@@ -24,6 +24,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from gem5_cpe521.src.mem.cache.tags.indexing_policies.IndexingPolicies \
+    import SetAssociative
 from m5.params import *
 from m5.proxy import *
 from m5.SimObject import SimObject
@@ -173,3 +175,5 @@ class TSelRP(BaseReplacementPolicy):
 class TSelTest(TSelRP):
     replacement_policy_a = BIPRP()
     replacement_policy_b = SecondChanceRP()
+    index_policy_a = SetAssociative()
+    index_policy_b = SetAssociative()
