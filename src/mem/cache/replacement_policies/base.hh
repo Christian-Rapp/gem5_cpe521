@@ -97,10 +97,16 @@ class Base : public SimObject
 
     /**
      * Find replacement victim among candidates.
-     *
+     * If the Replacement Policy requires the address (TSEL) then they will
+     * override the function, otherwise just use the base function
      * @param candidates Replacement candidates, selected by indexing policy.
      * @return Replacement entry to be replaced.
      */
+    virtual ReplaceableEntry* getVictim(
+                            const ReplacementCandidates& candidates, Addr addr)
+    {
+        return getVictim(candidates);
+    }
     virtual ReplaceableEntry* getVictim(
                            const ReplacementCandidates& candidates) const = 0;
 

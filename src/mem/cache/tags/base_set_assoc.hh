@@ -175,7 +175,7 @@ class BaseSetAssoc : public BaseTags
 
         // Choose replacement victim from replacement candidates
         CacheBlk* victim = static_cast<CacheBlk*>(replacementPolicy->getVictim(
-                                entries));
+                            entries, addr));
 
         // There is only one eviction for this replacement
         evict_blks.push_back(victim);
