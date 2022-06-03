@@ -350,6 +350,11 @@ class MSHR : public QueueEntry, public Printable
 
     void update_mlp_cost();
 
+    float get_mlp_cost()
+    {
+        return mlp_cost;
+    }
+
     /**
      * Determine if there are non-deferred requests from other caches
      *

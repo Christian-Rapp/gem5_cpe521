@@ -108,6 +108,11 @@ class CacheBlk : public TaggedEntry
      */
     Tick whenReady = 0;
 
+    /**
+     * Quantized MLP cost associated with this block
+     */
+    uint8_t costq;
+
   protected:
     /**
      * Represents that the indicated thread context has a "lock" on
@@ -203,6 +208,7 @@ class CacheBlk : public TaggedEntry
 
         clearPrefetched();
         clearCoherenceBits(AllBits);
+        costq = 0;
 
         setTaskId(context_switch_task_id::Unknown);
         setWhenReady(MaxTick);
@@ -239,6 +245,39 @@ class CacheBlk : public TaggedEntry
     isSet(unsigned bits) const
     {
         return isValid() && (coherence & bits);
+    }
+
+    /**
+     * Set the costq metric for the block
+     *
+     */
+    void setCostQ(float mlp_cost)
+    {
+        // Quantize the MLP cost to 3-bit value according
+        // to the paper's ranges
+        if (mlp_cost <= 59) {
+            costq = 0;
+        }
+        else if (mlp_cost <= 119) {
+            costq = 1;
+        }
+        else if (mlp_cost <= 179) {
+            costq = 2;
+        }
+        else if (mlp_cost <= 239) {
+            costq = 3;
+        }
+        else if (mlp_cost <= 299) {
+            costq = 4;
+        }
+        else if (mlp_cost <= 359) {
+            costq = 5;
+        }
+        else if (mlp_cost <= 419) {
+            costq = 6;
+        } else {
+            costq = 7;
+        }
     }
 
     /**

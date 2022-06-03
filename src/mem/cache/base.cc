@@ -520,6 +520,9 @@ BaseCache::recvTimingResp(PacketPtr pkt)
         mshr->promoteWritable();
     }
 
+    // Update costq for this block based on the mlp_cost in MSHR
+    blk->setCostQ(mshr->get_mlp_cost());
+
     serviceMSHRTargets(mshr, pkt, blk);
 
     if (mshr->promoteDeferredTargets()) {
