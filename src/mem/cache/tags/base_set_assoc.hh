@@ -145,6 +145,8 @@ class BaseSetAssoc : public BaseTags
             // Update number of references to accessed block
             blk->increaseRefCount();
 
+            // @todo: need to add current costq value to blk->replacementData
+            // before calling this function so we can use it in touch
             // Update replacement data of accessed block
             replacementPolicy->touch(blk->replacementData, pkt);
         }
