@@ -6,6 +6,7 @@
 
 #include "base/intmath.hh"
 #include "mem/cache/cache_blk.hh"
+#include "params/TSelRP.hh"
 
 namespace gem5
 {
@@ -19,10 +20,11 @@ TSel::TSel(const Params &p)
     indexPolicyA(p.index_policy_a),
     replPolicyB(p.replacement_policy_b),
     indexPolicyB(p.index_policy_b),
-    numSets(p.index_policy_a->size /
-            (p.index_policy_a->entry_size*p.index_policy_a->assoc)),
-    numWays(p.index_policy_a->assoc),
-    entrySize(p.index_policy_a->entry_size)
+    // numSets(p.index_policy_a->size /
+    //         (p.index_policy_a->entry_size*p.index_policy_a->assoc)),
+    numSets(p.index_policy_a->numSets),
+    numWays(p.index_policy_a->assoc)
+    // entrySize(p.index_policy_a->entry_size)
 {
     fatal_if((replPolicyA == nullptr) || (replPolicyB == nullptr),
         "All replacement policies must be instantiated");
@@ -142,6 +144,7 @@ TSel::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
         // since we don't care about any coherence bits in the
         // ATDs, just the tags
         victim->insert(indexPolicyA->extractTag(addr), true);
+        costq = victim->replacementData->costq;
     }
 
     // === update ATD for replacement policy B ===
@@ -165,6 +168,7 @@ TSel::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
         // Need to replace the victim with the new tag
         // Should is_secure be true here??
         victim->insert(indexPolicyB->extractTag(addr), true);
+        costq = victim->replacementData->costq;
     }
 
     // Update the saturating counter for this set
@@ -186,9 +190,11 @@ SatCounter16
 TSel::getCounter(Addr addr)
 {
     // Extract the set from the address
-    int setShift = floorLog2(entrySize);
-    int setMask = numSets - 1;
-    int set = (addr >> setShift) & setMask;
+    // int setShift = floorLog2(entrySize);
+    // int setMask = numSets - 1;
+    // int set = (addr >> setShift) & setMask;
+
+    uint32_t set = indexPolicyA->extractSet(addr);
 
     return SCTRs[set];
 }
@@ -235,7 +241,7 @@ void TSel::updateBlockReplacementData(
         }
 
         // Extract the tag from the block
-        Addr mtd_tag = mtd_blk.getTag();
+        Addr mtd_tag = mtd_blk->getTag();
 
         // Search for matching block in auxiliary tag directory
         for (const auto& atd_entry : atdCandidates) {
@@ -246,7 +252,7 @@ void TSel::updateBlockReplacementData(
             // If the main tag is in the auxiliary then update it
             if (atd_blk->matchTag(mtd_tag, is_secure)) {
                 // Set auxiliary replacement data to match current costq
-                atd_blk->replacement_data->costq = mtd_blk->costq;
+                atd_entry->replacementData->costq = mtd_blk->costq;
             }
         }
     }

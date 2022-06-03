@@ -111,6 +111,7 @@ class TSel : public Base
     SatCounter16 getCounter(const Addr addr);
 
   public:
+    // typedef TSelRPParams Params;
     PARAMS(TSelRP);
     TSel(const Params &p);
     ~TSel() = default;
