@@ -24,6 +24,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from gem5_cpe521.src.mem.cache.tags.indexing_policies.IndexingPolicies \
+    import SetAssociative
 from m5.params import *
 from m5.proxy import *
 from m5.SimObject import SimObject
@@ -149,3 +151,29 @@ class WeightedLRURP(LRURP):
     type = "WeightedLRURP"
     cxx_class = 'gem5::replacement_policy::WeightedLRU'
     cxx_header = "mem/cache/replacement_policies/weighted_lru_rp.hh"
+
+class TSelRP(BaseReplacementPolicy):
+    type = 'TSelRP'
+    cxx_class = 'gem5::replacement_policy::TSel'
+    cxx_header = "mem/cache/replacement_policies/tsel_rp.hh"
+
+    # Auxiliary Indexing Policies
+    index_policy_a = Param.BaseIndexingPolicy(
+        "Auxiliary indexing policy A")
+    index_policy_b = Param.BaseIndexingPolicy(
+        "Auxiliary indexing policy B")
+
+    # Replacement Policies for TSel
+    replacement_policy_a = Param.BaseReplacementPolicy(
+        "Sub-replacement policy A")
+    replacement_policy_b = Param.BaseReplacementPolicy(
+        "Sub-replacement policy B")
+
+    # Number of counter bits
+    num_counter_bits = Param.Int(3, "Number of counter bits")
+
+class TSelTest(TSelRP):
+    replacement_policy_a = BIPRP()
+    replacement_policy_b = SecondChanceRP()
+    index_policy_a = SetAssociative()
+    index_policy_b = SetAssociative()
