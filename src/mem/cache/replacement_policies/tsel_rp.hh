@@ -108,7 +108,7 @@ class TSel : public Base
     bool isAddressInEntries(const Addr addr,
                             const ReplacementCandidates& entries);
     void updateAuxiliaryDirectories(const Addr addr, uint8_t costq);
-    SatCounter16 TSel::getCounter(const Addr addr);
+    SatCounter16 getCounter(const Addr addr);
 
   public:
     PARAMS(TSelRP);
@@ -127,14 +127,14 @@ class TSel : public Base
         Addr addr) override;
     std::shared_ptr<ReplacementData> instantiateEntry() override;
 
-    void Base::setCache(Cache *_cache) {
+    void setCache(Cache *_cache) {
         // The cache can only be set once
         assert(!cache);
         cache = _cache;
     }
 
     void
-    TSel::updateBlockReplacementData(
+    updateBlockReplacementData(
                               const ReplacementCandidates& mtdCandidates,
                               const ReplacementCandidates& atdCandidates);
 };

@@ -57,6 +57,7 @@
 #include "mem/cache/mshr.hh"
 #include "mem/cache/prefetch/base.hh"
 #include "mem/cache/queue_entry.hh"
+#include "mem/cache/replacement_policies/tsel_rp.hh"
 #include "mem/cache/tags/compressed_tags.hh"
 #include "mem/cache/tags/super_blk.hh"
 #include "params/BaseCache.hh"
@@ -139,10 +140,11 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
 
     /** Manages the active replacement policy */
     repacementPolicyActive = false;
+    tSelPolicyActive = false;
     if (p.replacement_policy) {
         repacementPolicyActive = true;
-        tSelPolicyActive = dynamic_cast<replacement_policy::TSel*>(
-                                    p.replacement_policy) ? true : false;
+        tSelPolicyActive = dynamic_cast<replacement_policy::TSel*>
+                (p.replacement_policy) ? true : false;
     }
 
 }

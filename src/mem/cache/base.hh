@@ -991,6 +991,16 @@ class BaseCache : public ClockedObject
      * Normally this is all possible memory addresses. */
     const AddrRangeList addrRanges;
 
+    /**
+     * Records whether or not a replacement policy is active
+     */
+    bool repacementPolicyActive;
+
+    /**
+     * Records whether or not replacement policy is TSel
+     */
+    bool tSelPolicyActive;
+
   public:
     /** System we are currently operating in. */
     System *system;
@@ -1503,15 +1513,6 @@ class WriteAllocator : public SimObject
      */
     std::unordered_map<Addr, Counter> delayCtr;
 
-    /**
-     * Records whether or not a replacement policy is active
-     */
-    bool repacementPolicyActive;
-
-    /**
-     * Records whether or not replacement policy is TSel
-     */
-    bool tSelPolicyActive;
 };
 
 } // namespace gem5

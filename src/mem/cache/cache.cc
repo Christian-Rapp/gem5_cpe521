@@ -58,6 +58,7 @@
 #include "enums/Clusivity.hh"
 #include "mem/cache/cache_blk.hh"
 #include "mem/cache/mshr.hh"
+#include "mem/cache/replacement_policies/tsel_rp.hh"
 #include "mem/cache/tags/base.hh"
 #include "mem/cache/write_queue_entry.hh"
 #include "mem/request.hh"
@@ -82,7 +83,8 @@ Cache::Cache(const CacheParams &p)
     bool tsel_repl = dynamic_cast<replacement_policy::TSel*>(
                                     p.replacement_policy) ? true : false;
     if (tsel_repl) {
-        p.replacement_policy->setCache(this);
+         dynamic_cast<replacement_policy::TSel*>
+                (p.replacement_policy)->setCache(this);
     }
 }
 
