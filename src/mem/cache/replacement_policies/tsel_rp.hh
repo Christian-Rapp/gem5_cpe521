@@ -26,20 +26,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_DUELING_RP_HH__
-#define __MEM_CACHE_REPLACEMENT_POLICIES_DUELING_RP_HH__
+#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_TSEL_RP_HH__
+#define __MEM_CACHE_REPLACEMENT_POLICIES_TSEL_RP_HH__
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 
 #include "base/compiler.hh"
+#include "base/sat_counter.hh"
 #include "base/statistics.hh"
 #include "mem/cache/replacement_policies/base.hh"
-#include "mem/cache/tags/dueling.hh"
+#include "mem/cache/tags/indexing_policies/base.hh"
+#include "mem/cache/tags/indexing_policies/set_associative.hh"
 
 namespace gem5
 {
 
-struct DuelingRPParams;
+struct TSelRPParams;
 
 GEM5_DEPRECATED_NAMESPACE(ReplacementPolicy, replacement_policy);
 namespace replacement_policy
@@ -50,22 +54,22 @@ namespace replacement_policy
  * one provides the best results. A policy is said to have the best results
  * when it has a lower number of misses.
  */
-class Dueling : public Base
+class TSel : public Base
 {
   protected:
     /**
      * Dueler-specific implementation of replacement data. Contains all
      * sub-replacement policies' replacement data.
      */
-    struct DuelerReplData : ReplacementData, Dueler
+    struct TSelReplData : ReplacementData
     {
         std::shared_ptr<ReplacementData> replDataA;
         std::shared_ptr<ReplacementData> replDataB;
 
         /** Default constructor. Initialize sub-replacement data. */
-        DuelerReplData(const std::shared_ptr<ReplacementData>& repl_data_a,
+        TSelReplData(const std::shared_ptr<ReplacementData>& repl_data_a,
             const std::shared_ptr<ReplacementData>& repl_data_b)
-          : ReplacementData(), Dueler(), replDataA(repl_data_a),
+          : ReplacementData(), replDataA(repl_data_a),
             replDataB(repl_data_b)
         {
         }
@@ -73,30 +77,39 @@ class Dueling : public Base
 
     /** Sub-replacement policy used in this multiple container. */
     Base* const replPolicyA;
+    /** Sub-indexing policy used in this multiple container. */
+    BaseIndexingPolicy* const indexPolicyA;
+    // SetAssociative* const indexPolicyA;
+
     /** Sub-replacement policy used in this multiple container. */
     Base* const replPolicyB;
+    /** Sub-indexing policy used in this multiple container. */
+    BaseIndexingPolicy* const indexPolicyB;
+    // SetAssociative* const indexPolicyB;
 
-    /**
-     * A dueling monitor that decides which is the best sub-policy based on
-     * their number of misses.
-     */
-    mutable DuelingMonitor duelingMonitor;
+    /** Number of sets in the cache */
+    int numSets;
 
-    mutable struct DuelingStats : public statistics::Group
-    {
-        DuelingStats(statistics::Group* parent);
+    /** Number of ways in the cache */
+    int numWays;
 
-        /** Number of times A was selected on victimization. */
-        statistics::Scalar selectedA;
+    /** Entry size in the cache */
+    int entrySize;
 
-        /** Number of times B was selected on victimization. */
-        statistics::Scalar selectedB;
-    } duelingStats;
+    /** List of saturating counters to use for each set in the cache */
+    std::vector<SatCounter16> SCTRs;
+
+  private:
+
+    bool isAddressInEntries(const Addr addr,
+                            const ReplacementCandidates& entries);
+    void updateAuxiliaryDirectories(const Addr addr, uint8_t costq);
+    SatCounter16 TSel::getCounter(const Addr addr);
 
   public:
-    PARAMS(DuelingRP);
-    Dueling(const Params &p);
-    ~Dueling() = default;
+    PARAMS(TSelRP);
+    TSel(const Params &p);
+    ~TSel() = default;
 
     void invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
                                                                     override;
@@ -104,16 +117,14 @@ class Dueling : public Base
         const PacketPtr pkt) override;
     void touch(const std::shared_ptr<ReplacementData>& replacement_data) const
                                                                      override;
-    void reset(const std::shared_ptr<ReplacementData>& replacement_data,
-        const PacketPtr pkt) override;
     void reset(const std::shared_ptr<ReplacementData>& replacement_data) const
                                                                      override;
-    ReplaceableEntry* getVictim(const ReplacementCandidates& candidates) const
-                                                                     override;
+    ReplaceableEntry* getVictim(const ReplacementCandidates& candidates,
+        Addr addr) override;
     std::shared_ptr<ReplacementData> instantiateEntry() override;
 };
 
 } // namespace replacement_policy
 } // namespace gem5
 
-#endif // __MEM_CACHE_REPLACEMENT_POLICIES_DUELING_RP_HH__
+#endif // __MEM_CACHE_REPLACEMENT_POLICIES_TSEL_RP_HH__
