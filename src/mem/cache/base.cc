@@ -136,6 +136,15 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
         "Compressed cache %s does not have a compression algorithm", name());
     if (compressor)
         compressor->setCache(this);
+
+    /** Manages the active replacement policy */
+    repacementPolicyActive = false;
+    if (p.replacement_policy) {
+        repacementPolicyActive = true;
+        tSelPolicyActive = dynamic_cast<replacement_policy::TSel*>(
+                                    p.replacement_policy) ? true : false;
+    }
+
 }
 
 BaseCache::~BaseCache()
@@ -521,7 +530,9 @@ BaseCache::recvTimingResp(PacketPtr pkt)
     }
 
     // Update costq for this block based on the mlp_cost in MSHR
-    blk->setCostQ(mshr->get_mlp_cost());
+    if (tSelPolicyActive) {
+        blk->setCostQ(mshr->get_mlp_cost());
+    }
 
     serviceMSHRTargets(mshr, pkt, blk);
 

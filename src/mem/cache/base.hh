@@ -1502,6 +1502,16 @@ class WriteAllocator : public SimObject
      * WriteReq MSHR.
      */
     std::unordered_map<Addr, Counter> delayCtr;
+
+    /**
+     * Records whether or not a replacement policy is active
+     */
+    bool repacementPolicyActive;
+
+    /**
+     * Records whether or not replacement policy is TSel
+     */
+    bool tSelPolicyActive;
 };
 
 } // namespace gem5

@@ -36,6 +36,7 @@
 #include "base/compiler.hh"
 #include "base/sat_counter.hh"
 #include "base/statistics.hh"
+#include "mem/cache/cache.hh"
 #include "mem/cache/replacement_policies/base.hh"
 #include "mem/cache/tags/indexing_policies/base.hh"
 #include "mem/cache/tags/indexing_policies/set_associative.hh"
@@ -99,6 +100,9 @@ class TSel : public Base
     /** List of saturating counters to use for each set in the cache */
     std::vector<SatCounter16> SCTRs;
 
+    /** Pointer to the actual implementation of the cache */
+    Cache *cache;
+
   private:
 
     bool isAddressInEntries(const Addr addr,
@@ -122,6 +126,17 @@ class TSel : public Base
     ReplaceableEntry* getVictim(const ReplacementCandidates& candidates,
         Addr addr) override;
     std::shared_ptr<ReplacementData> instantiateEntry() override;
+
+    void Base::setCache(Cache *_cache) {
+        // The cache can only be set once
+        assert(!cache);
+        cache = _cache;
+    }
+
+    void
+    TSel::updateBlockReplacementData(
+                              const ReplacementCandidates& mtdCandidates,
+                              const ReplacementCandidates& atdCandidates);
 };
 
 } // namespace replacement_policy

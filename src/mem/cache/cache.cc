@@ -72,6 +72,18 @@ Cache::Cache(const CacheParams &p)
 {
     assert(p.tags);
     assert(p.replacement_policy);
+
+    /** If the replacement policy is TSel it requires access
+        to the cache implementation to update and retrieve
+        MSHR data for the cost metric
+        MSHR and Compressor get passed the Cache at the base cache level
+        But there is no guarantee that the
+        basecache has a replacement policy */
+    bool tsel_repl = dynamic_cast<replacement_policy::TSel*>(
+                                    p.replacement_policy) ? true : false;
+    if (tsel_repl) {
+        p.replacement_policy->setCache(this);
+    }
 }
 
 void

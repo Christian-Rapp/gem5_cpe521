@@ -93,6 +93,10 @@ TSel::getVictim(const ReplacementCandidates& candidates, Addr addr)
     updateAuxiliaryDirectories(addr, costq);
     // @todo: ^ pass the victim into this function? we shouldn't be
     //   recalculating it since it needs to be consistent
+
+    // Why do we need to pass the victim in the auxiliary directory?
+    // Each aux dir will have to make independent decisions
+    // from the MTD
     return victim;
 }
 
@@ -112,12 +116,17 @@ TSel::instantiateEntry()
 // Updates auxiliary directories based on what would have happened
 void
 TSel::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
+    // Get all the blocks in the MTD
+    const std::vector<ReplaceableEntry*> mtdCandidates =
+            cache->tags->indexingPolicy->getPossibleEntries(addr);
 
     // === update ATD for replacement policy A ===
     bool hitA = false;
     const std::vector<ReplaceableEntry*> candidatesA =
             indexPolicyA->getPossibleEntries(addr);
 
+    // Update the costq for the auxiliary a
+    updateBlockReplacementData(mtdCandidates, candidatesA);
     // is the address a hit in ATD A?
     hitA = isAddressInEntries(addr, candidatesA);
 
@@ -139,6 +148,9 @@ TSel::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
     bool hitB = false;
     const std::vector<ReplaceableEntry*> candidatesB =
             indexPolicyB->getPossibleEntries(addr);
+
+    // Update the costq for the auxiliary b
+    updateBlockReplacementData(mtdCandidates, candidatesB);
 
     // is the address a hit in ATD B?
     hitB = isAddressInEntries(addr, candidatesB);
@@ -201,6 +213,43 @@ bool TSel::isAddressInEntries(Addr addr, const ReplacementCandidates& entries)
 
     // Did not find block
     return false;
+}
+
+/**
+ * This function is the primary one responsible for updating
+ * costq data for aux d
+ * The costq for each block is kept up to date for the mtd
+ * So we have to retrieve it and then have it match up for the aux d
+ */
+void TSel::updateBlockReplacementData(
+                                const ReplacementCandidates& mtdCandidates,
+                                const ReplacementCandidates& atdCandidates)
+{
+    // Iterate through each of the current candidates in the Main Tag Directory
+    for (const auto& mtb_entry : mtdCandidates) {
+        // Extract block from from the entry
+        CacheBlk* mtd_blk = static_cast<CacheBlk*>(mtb_entry);
+        bool is_secure = mtd_blk->isSecure();
+        if (!is_secure) {
+            continue;
+        }
+
+        // Extract the tag from the block
+        Addr mtd_tag = mtd_blk.getTag();
+
+        // Search for matching block in auxiliary tag directory
+        for (const auto& atd_entry : atdCandidates) {
+            // Extract block from entries
+            CacheBlk* atd_blk = static_cast<CacheBlk*>(atd_entry);
+            is_secure = atd_blk->isSecure();
+
+            // If the main tag is in the auxiliary then update it
+            if (atd_blk->matchTag(mtd_tag, is_secure)) {
+                // Set auxiliary replacement data to match current costq
+                atd_blk->replacement_data->costq = mtd_blk->costq;
+            }
+        }
+    }
 }
 
 } // namespace replacement_policy
