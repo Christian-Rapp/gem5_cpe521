@@ -143,7 +143,7 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
     tSelPolicyActive = false;
     if (p.replacement_policy) {
         repacementPolicyActive = true;
-        tSelPolicyActive = dynamic_cast<replacement_policy::TSel*>
+        tSelPolicyActive = dynamic_cast<replacement_policy::TSel2*>
                 (p.replacement_policy) ? true : false;
     }
 

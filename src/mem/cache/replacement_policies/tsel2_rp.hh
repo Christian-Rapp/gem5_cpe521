@@ -26,11 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_TSEL_RP_HH__
-#define __MEM_CACHE_REPLACEMENT_POLICIES_TSEL_RP_HH__
+#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_TSel2_RP_HH__
+#define __MEM_CACHE_REPLACEMENT_POLICIES_TSel2_RP_HH__
 
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 
 #include "base/compiler.hh"
@@ -40,12 +38,12 @@
 #include "mem/cache/replacement_policies/base.hh"
 #include "mem/cache/tags/indexing_policies/base.hh"
 
-// #include "mem/cache/tags/indexing_policies/set_associative.hh"
+// #include "mem/cache/tags/TSel.hh"
 
 namespace gem5
 {
 
-struct TSelRPParams;
+struct TSel2RPParams;
 
 GEM5_DEPRECATED_NAMESPACE(ReplacementPolicy, replacement_policy);
 namespace replacement_policy
@@ -56,20 +54,20 @@ namespace replacement_policy
  * one provides the best results. A policy is said to have the best results
  * when it has a lower number of misses.
  */
-class TSel : public Base
+class TSel2 : public Base
 {
   protected:
     /**
-     * Dueler-specific implementation of replacement data. Contains all
+     * -specific implementation of replacement data. Contains all
      * sub-replacement policies' replacement data.
      */
-    struct TSelReplData : ReplacementData
+    struct TSel2ReplData : ReplacementData
     {
         std::shared_ptr<ReplacementData> replDataA;
         std::shared_ptr<ReplacementData> replDataB;
 
         /** Default constructor. Initialize sub-replacement data. */
-        TSelReplData(const std::shared_ptr<ReplacementData>& repl_data_a,
+        TSel2ReplData(const std::shared_ptr<ReplacementData>& repl_data_a,
             const std::shared_ptr<ReplacementData>& repl_data_b)
           : ReplacementData(), replDataA(repl_data_a),
             replDataB(repl_data_b)
@@ -79,23 +77,22 @@ class TSel : public Base
 
     /** Sub-replacement policy used in this multiple container. */
     Base* const replPolicyA;
-    /** Sub-indexing policy used in this multiple container. */
-    BaseIndexingPolicy* const indexPolicyA;
-    // SetAssociative* const indexPolicyA;
-
     /** Sub-replacement policy used in this multiple container. */
     Base* const replPolicyB;
+
+    /** Sub-indexing policy used in this multiple container. */
+    BaseIndexingPolicy* const indexPolicyA;
+
     /** Sub-indexing policy used in this multiple container. */
     BaseIndexingPolicy* const indexPolicyB;
-    // SetAssociative* const indexPolicyB;
-
-    // /** List of saturating counters to use for each set in the cache */
-    // std::vector<SatCounter16> SCTRs;
 
     int numCounterBits;
 
-    // /** Pointer to the actual implementation of the cache */
-    // Cache *cache;
+    /** List of saturating counters to use for each set in the cache */
+    std::vector<SatCounter16> SCTRs;
+
+    /** Pointer to the actual implementation of the cache */
+    Cache *cache;
 
   private:
 
@@ -105,36 +102,36 @@ class TSel : public Base
     SatCounter16 getCounter(const Addr addr);
 
   public:
-    // typedef TSelRPParams Params;
-    PARAMS(TSelRP);
-    TSel(const Params &p);
-    ~TSel() = default;
+    PARAMS(TSel2RP);
+    TSel2(const Params &p);
+    ~TSel2() = default;
 
     void invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
                                                                     override;
     void touch(const std::shared_ptr<ReplacementData>& replacement_data,
         const PacketPtr pkt) override;
-    // void touch(const std::shared_ptr<ReplacementData>& replacement_data)
-              // const override
+    void touch(const std::shared_ptr<ReplacementData>& replacement_data) const
+                                                                     override;
+    void reset(const std::shared_ptr<ReplacementData>& replacement_data,
+        const PacketPtr pkt) override;
     void reset(const std::shared_ptr<ReplacementData>& replacement_data) const
                                                                      override;
+    ReplaceableEntry* getVictim(const ReplacementCandidates& candidates) const
+                                                                     override;
+
     ReplaceableEntry* getVictim(const ReplacementCandidates& candidates,
-        Addr addr) override;
+           Addr addr) override;
+
     std::shared_ptr<ReplacementData> instantiateEntry() override;
 
-    // void setCache(Cache *_cache) {
-    //     // The cache can only be set once
-    //     assert(!cache);
-    //     cache = _cache;
-    // }
-
-    void
-    updateBlockReplacementData(
-                              const ReplacementCandidates& mtdCandidates,
-                              const ReplacementCandidates& atdCandidates);
+    void setCache(Cache *_cache) {
+        // The cache can only be set once
+        assert(!cache);
+        cache = _cache;
+    }
 };
 
 } // namespace replacement_policy
 } // namespace gem5
 
-#endif // __MEM_CACHE_REPLACEMENT_POLICIES_TSEL_RP_HH__
+#endif // __MEM_CACHE_REPLACEMENT_POLICIES_TSel_RP_HH__

@@ -80,10 +80,10 @@ Cache::Cache(const CacheParams &p)
         MSHR and Compressor get passed the Cache at the base cache level
         But there is no guarantee that the
         basecache has a replacement policy */
-    bool tsel_repl = dynamic_cast<replacement_policy::TSel*>(
+    bool tsel_repl = dynamic_cast<replacement_policy::TSel2*>(
                                     p.replacement_policy) ? true : false;
     if (tsel_repl) {
-         dynamic_cast<replacement_policy::TSel*>
+         dynamic_cast<replacement_policy::TSel2*>
                 (p.replacement_policy)->setCache(this);
     }
 }

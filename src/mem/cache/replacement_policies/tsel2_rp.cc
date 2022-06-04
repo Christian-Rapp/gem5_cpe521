@@ -1,12 +1,35 @@
 /**
- * Alexander Knapen, Christian Rapp, Joel Valdovinos
- * Implementation similar to Tournament Selection
+ * Copyright (c) 2019, 2020 Inria
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met: redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer;
+ * redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution;
+ * neither the name of the copyright holders nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "mem/cache/replacement_policies/tsel_rp.hh"
 
-#include "base/intmath.hh"
-#include "mem/cache/cache_blk.hh"
-#include "params/TSelRP.hh"
+#include "mem/cache/replacement_policies/tsel2_rp.hh"
+
+#include "base/logging.hh"
+#include "params/TSel2RP.hh"
 
 namespace gem5
 {
@@ -14,11 +37,10 @@ namespace gem5
 namespace replacement_policy
 {
 
-/** TSel class constructor */
-TSel::TSel(const Params &p)
+TSel2::TSel2(const Params &p)
   : Base(p), replPolicyA(p.replacement_policy_a),
-    indexPolicyA(p.index_policy_a),
     replPolicyB(p.replacement_policy_b),
+    indexPolicyA(p.index_policy_a),
     indexPolicyB(p.index_policy_b),
     numCounterBits(p.num_counter_bits)
 {
@@ -29,61 +51,93 @@ TSel::TSel(const Params &p)
             "Maximum number of counter bits must be <= 16");
 
     // Construct the list of counters
-    // for (uint32_t i = 0; i < indexPolicyA->getNumSets(); i++)
-    // {
-    //     SCTRs.push_back(SatCounter16(p.num_counter_bits));
-    // }
+    for (uint32_t i = 0; i < indexPolicyA->getNumSets(); i++)
+    {
+        SCTRs.push_back(SatCounter16(p.num_counter_bits));
+    }
 }
 
 void
-TSel::invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
+TSel2::invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
 {
-    std::shared_ptr<TSelReplData> casted_replacement_data =
-        std::static_pointer_cast<TSelReplData>(replacement_data);
+    std::shared_ptr<TSel2ReplData> casted_replacement_data =
+        std::static_pointer_cast<TSel2ReplData>(replacement_data);
     replPolicyA->invalidate(casted_replacement_data->replDataA);
     replPolicyB->invalidate(casted_replacement_data->replDataB);
 }
 
-// On touch (MTD Hit) we need to update the auxiliary directories
 void
-TSel::touch(const std::shared_ptr<ReplacementData>& replacement_data,
+TSel2::touch(const std::shared_ptr<ReplacementData>& replacement_data,
     const PacketPtr pkt)
 {
-    // Updated replacement data for sub-policies
-    std::shared_ptr<TSelReplData> casted_replacement_data =
-        std::static_pointer_cast<TSelReplData>(replacement_data);
-    replPolicyA->touch(casted_replacement_data->replDataA);
-    replPolicyB->touch(casted_replacement_data->replDataB);
+    std::shared_ptr<TSel2ReplData> casted_replacement_data =
+        std::static_pointer_cast<TSel2ReplData>(replacement_data);
+    replPolicyA->touch(casted_replacement_data->replDataA, pkt);
+    replPolicyB->touch(casted_replacement_data->replDataB, pkt);
 
-    // Find the blk in the MTD that was accessed based on the packet address
-    // BaseTags *MTD = cache->getTags();
-    // CacheBlk *blk = MTD->findBlock(pkt->getAddr(), pkt->isSecure());
+    // uint8_t costq = 1;
 
-    // Retrieve the cost for the accessed block
-    // uint8_t costq = blk->costq;
-    uint8_t costq = 1;
-
-    updateAuxiliaryDirectories(pkt->getAddr(), costq);
+    // updateAuxiliaryDirectories(pkt->getAddr(), costq);
 }
 
 void
-TSel::reset(const std::shared_ptr<ReplacementData>& replacement_data) const
+TSel2::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
 {
-    std::shared_ptr<TSelReplData> casted_replacement_data =
-        std::static_pointer_cast<TSelReplData>(replacement_data);
+    std::shared_ptr<TSel2ReplData> casted_replacement_data =
+        std::static_pointer_cast<TSel2ReplData>(replacement_data);
+    replPolicyA->touch(casted_replacement_data->replDataA);
+    replPolicyB->touch(casted_replacement_data->replDataB);
+}
+
+void
+TSel2::reset(const std::shared_ptr<ReplacementData>& replacement_data,
+    const PacketPtr pkt)
+{
+    std::shared_ptr<TSel2ReplData> casted_replacement_data =
+        std::static_pointer_cast<TSel2ReplData>(replacement_data);
+    replPolicyA->reset(casted_replacement_data->replDataA, pkt);
+    replPolicyB->reset(casted_replacement_data->replDataB, pkt);
+}
+
+void
+TSel2::reset(const std::shared_ptr<ReplacementData>& replacement_data) const
+{
+    std::shared_ptr<TSel2ReplData> casted_replacement_data =
+        std::static_pointer_cast<TSel2ReplData>(replacement_data);
     replPolicyA->reset(casted_replacement_data->replDataA);
     replPolicyB->reset(casted_replacement_data->replDataB);
 }
 
 ReplaceableEntry*
-TSel::getVictim(const ReplacementCandidates& candidates, Addr addr)
+TSel2::getVictim(const ReplacementCandidates& candidates) const
+{
+    ReplaceableEntry* victim;
+
+    // Choose the victim based on the current counter
+    // SatCounter16 counter = getCounter(addr);
+    double threshold = 1.0;
+    // We use the counter's current saturation to calculate who
+    // is winning. A threshold of 0.5 is equivalent to checking
+    // the MSB of the counter.
+    // (MSB = 0 -> choose repl A, MSB = 1 -> choose repl B)
+    if (threshold <= 0.5) { // replacement policy A is winning
+        victim =  replPolicyA->getVictim(candidates);
+    }
+    else {
+        victim =  replPolicyB->getVictim(candidates);
+    }
+
+    return victim;
+}
+
+ReplaceableEntry*
+TSel2::getVictim(const ReplacementCandidates& candidates, Addr addr)
 {
     ReplaceableEntry* victim;
 
     // Choose the victim based on the current counter
     SatCounter16 counter = getCounter(addr);
     double threshold = counter.calcSaturation();
-
     // We use the counter's current saturation to calculate who
     // is winning. A threshold of 0.5 is equivalent to checking
     // the MSB of the counter.
@@ -104,22 +158,19 @@ TSel::getVictim(const ReplacementCandidates& candidates, Addr addr)
     return victim;
 }
 
-// Instantiate all the replacement data we need
 std::shared_ptr<ReplacementData>
-TSel::instantiateEntry()
+TSel2::instantiateEntry()
 {
-    // Since TSel doesn't have its own replacement data,
-    // we are only responsible for instantiating the
-    // replacement data for the two sub-replacement policies
-    TSelReplData* replacement_data = new TSelReplData(
+    TSel2ReplData* replacement_data = new TSel2ReplData(
         replPolicyA->instantiateEntry(), replPolicyB->instantiateEntry());
-
-    return std::shared_ptr<TSelReplData>(replacement_data);
+    return std::shared_ptr<TSel2ReplData>(replacement_data);
 }
+
+// Non gem5 replacement policy functions
 
 // Updates auxiliary directories based on what would have happened
 void
-TSel::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
+TSel2::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
 
     // === update ATD for replacement policy A ===
     bool hitA = false;
@@ -186,7 +237,7 @@ TSel::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
 }
 
 SatCounter16
-TSel::getCounter(Addr addr)
+TSel2::getCounter(Addr addr)
 {
     // Extract the set from the address
     // int setShift = indexPolicyA->getSetShift();
@@ -198,7 +249,7 @@ TSel::getCounter(Addr addr)
 }
 
 // Determine if address is within list of entries
-bool TSel::isAddressInEntries(Addr addr, const ReplacementCandidates& entries)
+bool TSel2::isAddressInEntries(Addr addr, const ReplacementCandidates& entries)
 {
     // Extract tag from address
     Addr tag = indexPolicyA->extractTag(addr);
@@ -219,42 +270,7 @@ bool TSel::isAddressInEntries(Addr addr, const ReplacementCandidates& entries)
     return false;
 }
 
-/**
- * This function is the primary one responsible for updating
- * costq data for aux d
- * The costq for each block is kept up to date for the mtd
- * So we have to retrieve it and then have it match up for the aux d
- */
-// void TSel::updateBlockReplacementData(
-//                                 const ReplacementCandidates& mtdCandidates,
-//                                 const ReplacementCandidates& atdCandidates)
-// {
-//     // Iterate through each of the current candidates in the MTD
-//     for (const auto& mtb_entry : mtdCandidates) {
-//         // Extract block from from the entry
-//         CacheBlk* mtd_blk = static_cast<CacheBlk*>(mtb_entry);
-//         bool is_secure = mtd_blk->isSecure();
-//         if (!is_secure) {
-//             continue;
-//         }
 
-//         // Extract the tag from the block
-//         Addr mtd_tag = mtd_blk->getTag();
-
-//         // Search for matching block in auxiliary tag directory
-//         for (const auto& atd_entry : atdCandidates) {
-//             // Extract block from entries
-//             CacheBlk* atd_blk = static_cast<CacheBlk*>(atd_entry);
-//             is_secure = atd_blk->isSecure();
-
-//             // If the main tag is in the auxiliary then update it
-//             if (atd_blk->matchTag(mtd_tag, is_secure)) {
-//                 // Set auxiliary replacement data to match current costq
-//                 atd_entry->replacementData->costq = mtd_blk->costq;
-//             }
-//         }
-//     }
-// }
 
 } // namespace replacement_policy
 } // namespace gem5
