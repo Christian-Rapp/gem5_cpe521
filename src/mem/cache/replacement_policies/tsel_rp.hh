@@ -39,7 +39,7 @@
 #include "mem/cache/cache.hh"
 #include "mem/cache/replacement_policies/base.hh"
 #include "mem/cache/tags/indexing_policies/base.hh"
-#include "mem/cache/tags/indexing_policies/set_associative.hh"
+// #include "mem/cache/tags/indexing_policies/set_associative.hh"
 
 namespace gem5
 {
@@ -88,15 +88,6 @@ class TSel : public Base
     BaseIndexingPolicy* const indexPolicyB;
     // SetAssociative* const indexPolicyB;
 
-    /** Number of sets in the cache */
-    int numSets;
-
-    /** Number of ways in the cache */
-    int numWays;
-
-    /** Entry size in the cache */
-    int entrySize;
-
     /** List of saturating counters to use for each set in the cache */
     std::vector<SatCounter16> SCTRs;
 
@@ -120,8 +111,8 @@ class TSel : public Base
                                                                     override;
     void touch(const std::shared_ptr<ReplacementData>& replacement_data,
         const PacketPtr pkt) override;
-    void touch(const std::shared_ptr<ReplacementData>& replacement_data) const
-                                                                     override;
+    // void touch(const std::shared_ptr<ReplacementData>& replacement_data)
+              // const override
     void reset(const std::shared_ptr<ReplacementData>& replacement_data) const
                                                                      override;
     ReplaceableEntry* getVictim(const ReplacementCandidates& candidates,

@@ -102,6 +102,20 @@ class BaseIndexingPolicy : public SimObject
      */
     typedef BaseIndexingPolicyParams Params;
 
+    int getSetShift()
+    {
+      return setShift;
+    }
+
+    int getSetMask()
+    {
+      return setMask;
+    }
+
+    uint32_t getNumSets()
+    {
+      return numSets;
+    }
     /**
      * Construct and initialize this policy.
      */

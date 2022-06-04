@@ -1175,6 +1175,11 @@ class BaseCache : public ClockedObject
 
     void init() override;
 
+    BaseTags *getTags()
+    {
+        return tags;
+    }
+
     Port &getPort(const std::string &if_name,
                   PortID idx=InvalidPortID) override;
 
