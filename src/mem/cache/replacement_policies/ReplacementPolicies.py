@@ -202,12 +202,12 @@ class TSel2RP(BaseReplacementPolicy):
         "Sub-replacement policy B")
 
     index_policy_a = Param.BaseIndexingPolicy(SetAssociative(
-        entry_size = Parent.entry_size, assoc = Parent.assoc,
-        size = Parent.size),
+        entry_size = 64, assoc = 1,
+        size = "1MB"),
         "Index Policy A")
     index_policy_b = Param.BaseIndexingPolicy(SetAssociative(
-        entry_size = Parent.entry_size, assoc = Parent.assoc,
-        size = Parent.size),
+        entry_size = 64, assoc = 1,
+        size = "1MB"),
         "Index Policy B")
 
     num_counter_bits = Param.Int(3, "Number of counter bits")

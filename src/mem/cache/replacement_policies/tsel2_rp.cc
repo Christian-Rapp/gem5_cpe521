@@ -264,10 +264,13 @@ bool TSel2::isAddressInEntries(Addr addr, const ReplacementCandidates& entries)
 
         // Extract block from entries
         CacheBlk* blk = static_cast<CacheBlk*>(location);
-        bool is_secure = blk->isSecure();
+        if (blk != nullptr)
+        {
+            bool is_secure = blk->isSecure();
 
-        if (blk->matchTag(tag, is_secure)) {
-            return true;
+            if (blk->matchTag(tag, is_secure)) {
+                return true;
+            }
         }
     }
 
