@@ -49,21 +49,6 @@ class DuelingRP(BaseReplacementPolicy):
     replacement_policy_b = Param.BaseReplacementPolicy(
         "Sub-replacement policy B")
 
-class TSel2RP(BaseReplacementPolicy):
-    type = 'TSel2RP'
-    cxx_class = 'gem5::replacement_policy::TSel2'
-    cxx_header = "mem/cache/replacement_policies/tsel2_rp.hh"
-
-    replacement_policy_a = Param.BaseReplacementPolicy(
-        "Sub-replacement policy A")
-    replacement_policy_b = Param.BaseReplacementPolicy(
-        "Sub-replacement policy B")
-
-    index_policy_a = Param.BaseIndexingPolicy("Index Policy A")
-    index_policy_b = Param.BaseIndexingPolicy("Index Policy B")
-
-    num_counter_bits = Param.Int(3, "Number of counter bits")
-
 class FIFORP(BaseReplacementPolicy):
     type = 'FIFORP'
     cxx_class = 'gem5::replacement_policy::FIFO'
@@ -192,8 +177,37 @@ class TSelRP(BaseReplacementPolicy):
     # Number of counter bits
     num_counter_bits = Param.Int(3, "Number of counter bits")
 
-# class TSelTest(TSelRP):
+# class TSelTest(TSel2RP):
+#     # replacement_policy_a = BIPRP()
+#     # replacement_policy_b = SecondChanceRP()
+#     # index_policy_a = SetAssociative()
+#     # index_policy_b = SetAssociative()
+#     # num_counter_bit = 3
+
 #     replacement_policy_a = BIPRP()
 #     replacement_policy_b = SecondChanceRP()
+
 #     index_policy_a = SetAssociative()
 #     index_policy_b = SetAssociative()
+
+#     num_counter_bits = 3
+class TSel2RP(BaseReplacementPolicy):
+    type = 'TSel2RP'
+    cxx_class = 'gem5::replacement_policy::TSel2'
+    cxx_header = "mem/cache/replacement_policies/tsel2_rp.hh"
+
+    replacement_policy_a = Param.BaseReplacementPolicy(SecondChanceRP(),
+        "Sub-replacement policy A")
+    replacement_policy_b = Param.BaseReplacementPolicy(BIPRP(),
+        "Sub-replacement policy B")
+
+    index_policy_a = Param.BaseIndexingPolicy(SetAssociative(
+        entry_size = Parent.entry_size, assoc = Parent.assoc,
+        size = Parent.size),
+        "Index Policy A")
+    index_policy_b = Param.BaseIndexingPolicy(SetAssociative(
+        entry_size = Parent.entry_size, assoc = Parent.assoc,
+        size = Parent.size),
+        "Index Policy B")
+
+    num_counter_bits = Param.Int(3, "Number of counter bits")

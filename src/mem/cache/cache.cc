@@ -58,7 +58,7 @@
 #include "enums/Clusivity.hh"
 #include "mem/cache/cache_blk.hh"
 #include "mem/cache/mshr.hh"
-#include "mem/cache/replacement_policies/tsel_rp.hh"
+#include "mem/cache/replacement_policies/tsel2_rp.hh"
 #include "mem/cache/tags/base.hh"
 #include "mem/cache/write_queue_entry.hh"
 #include "mem/request.hh"

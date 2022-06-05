@@ -57,7 +57,7 @@
 #include "mem/cache/mshr.hh"
 #include "mem/cache/prefetch/base.hh"
 #include "mem/cache/queue_entry.hh"
-#include "mem/cache/replacement_policies/tsel_rp.hh"
+#include "mem/cache/replacement_policies/tsel2_rp.hh"
 #include "mem/cache/tags/compressed_tags.hh"
 #include "mem/cache/tags/super_blk.hh"
 #include "params/BaseCache.hh"

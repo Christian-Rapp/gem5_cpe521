@@ -75,9 +75,14 @@ TSel2::touch(const std::shared_ptr<ReplacementData>& replacement_data,
     replPolicyA->touch(casted_replacement_data->replDataA, pkt);
     replPolicyB->touch(casted_replacement_data->replDataB, pkt);
 
-    // uint8_t costq = 1;
+    // Find the blk in the MTD that was accessed based on the packet address
+    BaseTags *MTD = cache->getTags();
+    CacheBlk *blk = MTD->findBlock(pkt->getAddr(), pkt->isSecure());
 
-    // updateAuxiliaryDirectories(pkt->getAddr(), costq);
+    // Retrieve the cost for the accessed block
+    uint8_t costq = blk->costq;
+
+    updateAuxiliaryDirectories(pkt->getAddr(), costq);
 }
 
 void
