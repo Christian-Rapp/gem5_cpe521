@@ -91,6 +91,16 @@ class BaseSetAssoc : public BaseTags
     /** Convenience typedef. */
      typedef BaseSetAssocParams Params;
 
+    replacement_policy::Base* getReplPolicy()
+    {
+        return replacementPolicy;
+    }
+
+    BaseIndexingPolicy *getIndexPolicy()
+    {
+        return indexingPolicy;
+    }
+
     /**
      * Construct and initialize this tag store.
      */

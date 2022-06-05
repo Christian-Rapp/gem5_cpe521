@@ -36,6 +36,7 @@
 #include "base/statistics.hh"
 #include "mem/cache/cache.hh"
 #include "mem/cache/replacement_policies/base.hh"
+#include "mem/cache/tags/base_set_assoc.hh"
 #include "mem/cache/tags/indexing_policies/base.hh"
 
 // #include "mem/cache/tags/TSel.hh"
@@ -76,15 +77,19 @@ class TSel2 : public Base
     };
 
     /** Sub-replacement policy used in this multiple container. */
-    Base* const replPolicyA;
+    // Base* const replPolicyA;
     /** Sub-replacement policy used in this multiple container. */
-    Base* const replPolicyB;
+    // Base* const replPolicyB;
 
     /** Sub-indexing policy used in this multiple container. */
-    BaseIndexingPolicy* const indexPolicyA;
+    // BaseIndexingPolicy* const indexPolicyA;
 
     /** Sub-indexing policy used in this multiple container. */
-    BaseIndexingPolicy* const indexPolicyB;
+    // BaseIndexingPolicy* const indexPolicyB;
+
+    BaseSetAssoc* const atdA;
+
+    BaseSetAssoc* const atdB;
 
     int numCounterBits;
 

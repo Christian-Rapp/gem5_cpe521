@@ -38,20 +38,28 @@ namespace replacement_policy
 {
 
 TSel2::TSel2(const Params &p)
-  : Base(p), replPolicyA(p.replacement_policy_a),
-    replPolicyB(p.replacement_policy_b),
-    indexPolicyA(p.index_policy_a),
-    indexPolicyB(p.index_policy_b),
+  : Base(p),
+    // replPolicyA(p.replacement_policy_a),
+    // replPolicyB(p.replacement_policy_b),
+    // indexPolicyA(p.index_policy_a),
+    // indexPolicyB(p.index_policy_b),
+    atdA(dynamic_cast<BaseSetAssoc *>(p.atd_a)),
+    atdB(dynamic_cast<BaseSetAssoc *>(p.atd_b)),
     numCounterBits(p.num_counter_bits)
 {
-    fatal_if((replPolicyA == nullptr) || (replPolicyB == nullptr),
+    fatal_if((atdA->getReplPolicy() == nullptr) ||
+             (atdB->getReplPolicy() == nullptr),
         "All replacement policies must be instantiated");
 
     fatal_if(p.num_counter_bits > 16,
             "Maximum number of counter bits must be <= 16");
 
+    // Initialize the tags for the ATDs
+    atdA->tagsInit();
+    atdB->tagsInit();
+
     // Construct the list of counters
-    for (uint32_t i = 0; i < indexPolicyA->getNumSets(); i++)
+    for (uint32_t i = 0; i < atdA->getIndexPolicy()->getNumSets(); i++)
     {
         SCTRs.push_back(SatCounter16(p.num_counter_bits));
     }
@@ -62,8 +70,8 @@ TSel2::invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
 {
     std::shared_ptr<TSel2ReplData> casted_replacement_data =
         std::static_pointer_cast<TSel2ReplData>(replacement_data);
-    replPolicyA->invalidate(casted_replacement_data->replDataA);
-    replPolicyB->invalidate(casted_replacement_data->replDataB);
+    atdA->getReplPolicy()->invalidate(casted_replacement_data->replDataA);
+    atdB->getReplPolicy()->invalidate(casted_replacement_data->replDataB);
 }
 
 void
@@ -72,8 +80,8 @@ TSel2::touch(const std::shared_ptr<ReplacementData>& replacement_data,
 {
     std::shared_ptr<TSel2ReplData> casted_replacement_data =
         std::static_pointer_cast<TSel2ReplData>(replacement_data);
-    replPolicyA->touch(casted_replacement_data->replDataA, pkt);
-    replPolicyB->touch(casted_replacement_data->replDataB, pkt);
+    atdA->getReplPolicy()->touch(casted_replacement_data->replDataA, pkt);
+    atdB->getReplPolicy()->touch(casted_replacement_data->replDataB, pkt);
 
     // Find the blk in the MTD that was accessed based on the packet address
     BaseTags *MTD = cache->getTags();
@@ -90,8 +98,8 @@ TSel2::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
 {
     std::shared_ptr<TSel2ReplData> casted_replacement_data =
         std::static_pointer_cast<TSel2ReplData>(replacement_data);
-    replPolicyA->touch(casted_replacement_data->replDataA);
-    replPolicyB->touch(casted_replacement_data->replDataB);
+    atdA->getReplPolicy()->touch(casted_replacement_data->replDataA);
+    atdB->getReplPolicy()->touch(casted_replacement_data->replDataB);
 }
 
 void
@@ -100,8 +108,8 @@ TSel2::reset(const std::shared_ptr<ReplacementData>& replacement_data,
 {
     std::shared_ptr<TSel2ReplData> casted_replacement_data =
         std::static_pointer_cast<TSel2ReplData>(replacement_data);
-    replPolicyA->reset(casted_replacement_data->replDataA, pkt);
-    replPolicyB->reset(casted_replacement_data->replDataB, pkt);
+    atdA->getReplPolicy()->reset(casted_replacement_data->replDataA, pkt);
+    atdB->getReplPolicy()->reset(casted_replacement_data->replDataB, pkt);
 }
 
 void
@@ -109,8 +117,8 @@ TSel2::reset(const std::shared_ptr<ReplacementData>& replacement_data) const
 {
     std::shared_ptr<TSel2ReplData> casted_replacement_data =
         std::static_pointer_cast<TSel2ReplData>(replacement_data);
-    replPolicyA->reset(casted_replacement_data->replDataA);
-    replPolicyB->reset(casted_replacement_data->replDataB);
+    atdA->getReplPolicy()->reset(casted_replacement_data->replDataA);
+    atdB->getReplPolicy()->reset(casted_replacement_data->replDataB);
 }
 
 ReplaceableEntry*
@@ -126,10 +134,10 @@ TSel2::getVictim(const ReplacementCandidates& candidates) const
     // the MSB of the counter.
     // (MSB = 0 -> choose repl A, MSB = 1 -> choose repl B)
     if (threshold <= 0.5) { // replacement policy A is winning
-        victim =  replPolicyA->getVictim(candidates);
+        victim =  atdA->getReplPolicy()->getVictim(candidates);
     }
     else {
-        victim =  replPolicyB->getVictim(candidates);
+        victim =  atdB->getReplPolicy()->getVictim(candidates);
     }
 
     return victim;
@@ -148,10 +156,10 @@ TSel2::getVictim(const ReplacementCandidates& candidates, Addr addr)
     // the MSB of the counter.
     // (MSB = 0 -> choose repl A, MSB = 1 -> choose repl B)
     if (threshold <= 0.5) { // replacement policy A is winning
-        victim =  replPolicyA->getVictim(candidates);
+        victim =  atdA->getReplPolicy()->getVictim(candidates);
     }
     else {
-        victim =  replPolicyB->getVictim(candidates);
+        victim =  atdB->getReplPolicy()->getVictim(candidates);
     }
 
     // Extract the miss cost from the victim in the MTD
@@ -167,7 +175,8 @@ std::shared_ptr<ReplacementData>
 TSel2::instantiateEntry()
 {
     TSel2ReplData* replacement_data = new TSel2ReplData(
-        replPolicyA->instantiateEntry(), replPolicyB->instantiateEntry());
+        atdA->getReplPolicy()->instantiateEntry(),
+        atdB->getReplPolicy()->instantiateEntry());
     return std::shared_ptr<TSel2ReplData>(replacement_data);
 }
 
@@ -180,7 +189,7 @@ TSel2::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
     // === update ATD for replacement policy A ===
     bool hitA = false;
     const std::vector<ReplaceableEntry*> candidatesA =
-            indexPolicyA->getPossibleEntries(addr);
+            atdA->getIndexPolicy()->getPossibleEntries(addr);
 
     // Update the costq for the auxiliary a
     // updateBlockReplacementData(mtdCandidates, candidatesA);
@@ -192,20 +201,21 @@ TSel2::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
     {
         // Find a victim to replace
         CacheBlk *victim = static_cast<CacheBlk*>(
-            replPolicyA->getVictim(candidatesA));
+            atdA->getReplPolicy()->getVictim(candidatesA));
 
         // Need to replace the victim with the new tag
         // Should is_secure be true here?? I think it's fine
         // since we don't care about any coherence bits in the
         // ATDs, just the tags
-        victim->insert(indexPolicyA->extractTag(addr), true);
+        victim->insert(atdA->getIndexPolicy()->
+                                extractTag(addr), true);
         // costq = victim->replacementData->costq;
     }
 
     // === update ATD for replacement policy B ===
     bool hitB = false;
     const std::vector<ReplaceableEntry*> candidatesB =
-            indexPolicyB->getPossibleEntries(addr);
+            atdB->getIndexPolicy()->getPossibleEntries(addr);
 
     // Update the costq for the auxiliary b
     // updateBlockReplacementData(mtdCandidates, candidatesB);
@@ -218,11 +228,12 @@ TSel2::updateAuxiliaryDirectories(Addr addr, uint8_t costq) {
     {
         // Find a victim to replace
         CacheBlk *victim = static_cast<CacheBlk*>(
-            replPolicyB->getVictim(candidatesB));
+            atdB->getReplPolicy()->getVictim(candidatesB));
 
         // Need to replace the victim with the new tag
         // Should is_secure be true here??
-        victim->insert(indexPolicyB->extractTag(addr), true);
+        victim->insert(atdA->getIndexPolicy()->
+                                extractTag(addr), true);
         // costq = victim->replacementData->costq;
     }
 
@@ -257,7 +268,7 @@ TSel2::getCounter(Addr addr)
 bool TSel2::isAddressInEntries(Addr addr, const ReplacementCandidates& entries)
 {
     // Extract tag from address
-    Addr tag = indexPolicyA->extractTag(addr);
+    Addr tag = atdA->getIndexPolicy()->extractTag(addr);
 
     // Search for block
     for (const auto& location : entries) {
