@@ -77,19 +77,19 @@ class TSel2 : public Base
     };
 
     /** Sub-replacement policy used in this multiple container. */
-    // Base* const replPolicyA;
+    Base* const replPolicyA;
     /** Sub-replacement policy used in this multiple container. */
-    // Base* const replPolicyB;
+    Base* const replPolicyB;
 
     /** Sub-indexing policy used in this multiple container. */
-    // BaseIndexingPolicy* const indexPolicyA;
+    BaseIndexingPolicy* const indexPolicyA;
 
     /** Sub-indexing policy used in this multiple container. */
-    // BaseIndexingPolicy* const indexPolicyB;
+    BaseIndexingPolicy* const indexPolicyB;
 
-    BaseSetAssoc* const atdA;
+    // BaseSetAssoc* const atdA;
 
-    BaseSetAssoc* const atdB;
+    // BaseSetAssoc* const atdB;
 
     int numCounterBits;
 

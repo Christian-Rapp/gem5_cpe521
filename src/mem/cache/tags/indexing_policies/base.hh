@@ -116,6 +116,16 @@ class BaseIndexingPolicy : public SimObject
     {
       return numSets;
     }
+
+    uint32_t getAssoc()
+    {
+      return assoc;
+    }
+
+    std::vector<std::vector<ReplaceableEntry*>> getSets()
+    {
+      return sets;
+    }
     /**
      * Construct and initialize this policy.
      */
