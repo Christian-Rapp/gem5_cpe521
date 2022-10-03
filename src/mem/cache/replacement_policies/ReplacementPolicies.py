@@ -24,6 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from m5.objects.Tags import SetAssociative, SetAssoc
 from m5.params import *
 from m5.proxy import *
 from m5.SimObject import SimObject
@@ -52,6 +53,12 @@ class FIFORP(BaseReplacementPolicy):
     type = 'FIFORP'
     cxx_class = 'gem5::replacement_policy::FIFO'
     cxx_header = "mem/cache/replacement_policies/fifo_rp.hh"
+
+class FIFO2RP(BaseReplacementPolicy):
+    type = 'FIFO2RP'
+    cxx_class = 'gem5::replacement_policy::FIFO2'
+    cxx_header = "mem/cache/replacement_policies/fifo2_rp.hh"
+    dummy_variable = Param.Int(2, "Dummy")
 
 class SecondChanceRP(FIFORP):
     type = 'SecondChanceRP'
@@ -149,3 +156,65 @@ class WeightedLRURP(LRURP):
     type = "WeightedLRURP"
     cxx_class = 'gem5::replacement_policy::WeightedLRU'
     cxx_header = "mem/cache/replacement_policies/weighted_lru_rp.hh"
+
+class TSelRP(BaseReplacementPolicy):
+    type = 'TSelRP'
+    cxx_class = 'gem5::replacement_policy::TSel'
+    cxx_header = "mem/cache/replacement_policies/tsel_rp.hh"
+
+    # Auxiliary Indexing Policies
+    index_policy_a = Param.BaseIndexingPolicy(
+        "Auxiliary indexing policy A")
+    index_policy_b = Param.BaseIndexingPolicy(
+        "Auxiliary indexing policy B")
+
+    # Replacement Policies for TSel
+    replacement_policy_a = Param.BaseReplacementPolicy(
+        "Sub-replacement policy A")
+    replacement_policy_b = Param.BaseReplacementPolicy(
+        "Sub-replacement policy B")
+
+    # Number of counter bits
+    num_counter_bits = Param.Int(3, "Number of counter bits")
+
+# class TSelTest(TSel2RP):
+#     # replacement_policy_a = BIPRP()
+#     # replacement_policy_b = SecondChanceRP()
+#     # index_policy_a = SetAssociative()
+#     # index_policy_b = SetAssociative()
+#     # num_counter_bit = 3
+
+#     replacement_policy_a = BIPRP()
+#     replacement_policy_b = SecondChanceRP()
+
+#     index_policy_a = SetAssociative()
+#     index_policy_b = SetAssociative()
+
+#     num_counter_bits = 3
+class TSel2RP(BaseReplacementPolicy):
+    type = 'TSel2RP'
+    cxx_class = 'gem5::replacement_policy::TSel2'
+    cxx_header = "mem/cache/replacement_policies/tsel2_rp.hh"
+
+    replacement_policy_a = Param.BaseReplacementPolicy(NRURP(),
+        "Sub-replacement policy A")
+    replacement_policy_b = Param.BaseReplacementPolicy(BIPRP(),
+        "Sub-replacement policy B")
+
+    index_policy_a = Param.BaseIndexingPolicy(SetAssociative(
+        entry_size = 64, assoc = 1,
+        size = "1MB"),
+        "Index Policy A")
+    index_policy_b = Param.BaseIndexingPolicy(SetAssociative(
+        entry_size = 64, assoc = 1,
+        size = "1MB"),
+        "Index Policy B")
+    # atd_a = Param.BaseTags(BaseSetAssoc(assoc = 1,
+    #                      replacementPolicy = SecondChanceRP()))
+    # atd_b = Param.BaseTags(BaseSetAssoc(assoc = 1,
+    #                      replacementPolicy = BIPRP()))
+    # atd_a = Param.BaseSetAssoc(assoc = 1,
+    #                      replacementPolicy = SecondChanceRP())
+    # atd_b = Param.BaseSetAssoc(assoc = 1,
+    #                      replacementPolicy = BIPRP())
+    num_counter_bits = Param.Int(3, "Number of counter bits")

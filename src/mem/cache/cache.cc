@@ -58,6 +58,7 @@
 #include "enums/Clusivity.hh"
 #include "mem/cache/cache_blk.hh"
 #include "mem/cache/mshr.hh"
+#include "mem/cache/replacement_policies/tsel2_rp.hh"
 #include "mem/cache/tags/base.hh"
 #include "mem/cache/write_queue_entry.hh"
 #include "mem/request.hh"
@@ -72,6 +73,19 @@ Cache::Cache(const CacheParams &p)
 {
     assert(p.tags);
     assert(p.replacement_policy);
+
+    /** If the replacement policy is TSel it requires access
+        to the cache implementation to update and retrieve
+        MSHR data for the cost metric
+        MSHR and Compressor get passed the Cache at the base cache level
+        But there is no guarantee that the
+        basecache has a replacement policy */
+    bool tsel_repl = dynamic_cast<replacement_policy::TSel2*>(
+                                    p.replacement_policy) ? true : false;
+    if (tsel_repl) {
+         dynamic_cast<replacement_policy::TSel2*>
+                (p.replacement_policy)->setCache(this);
+    }
 }
 
 void

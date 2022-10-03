@@ -102,6 +102,30 @@ class BaseIndexingPolicy : public SimObject
      */
     typedef BaseIndexingPolicyParams Params;
 
+    int getSetShift()
+    {
+      return setShift;
+    }
+
+    int getSetMask()
+    {
+      return setMask;
+    }
+
+    uint32_t getNumSets()
+    {
+      return numSets;
+    }
+
+    uint32_t getAssoc()
+    {
+      return assoc;
+    }
+
+    std::vector<std::vector<ReplaceableEntry*>> getSets()
+    {
+      return sets;
+    }
     /**
      * Construct and initialize this policy.
      */

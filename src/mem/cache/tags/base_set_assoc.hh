@@ -91,6 +91,16 @@ class BaseSetAssoc : public BaseTags
     /** Convenience typedef. */
      typedef BaseSetAssocParams Params;
 
+    replacement_policy::Base* getReplPolicy()
+    {
+        return replacementPolicy;
+    }
+
+    BaseIndexingPolicy *getIndexPolicy()
+    {
+        return indexingPolicy;
+    }
+
     /**
      * Construct and initialize this tag store.
      */
@@ -145,7 +155,14 @@ class BaseSetAssoc : public BaseTags
             // Update number of references to accessed block
             blk->increaseRefCount();
 
+            // @todo: need to add current costq value to blk->replacementData
+            // before calling this function so we can use it in touch
             // Update replacement data of accessed block
+
+            // Instead actively manage the costq by comparing auxiliary
+            // with main tag directory
+            // blk->replacement_data->costq = blk->costq;
+
             replacementPolicy->touch(blk->replacementData, pkt);
         }
 
@@ -172,6 +189,9 @@ class BaseSetAssoc : public BaseTags
         // Get possible entries to be victimized
         const std::vector<ReplaceableEntry*> entries =
             indexingPolicy->getPossibleEntries(addr);
+
+        // Need to update the costq for each of the possible entries
+
 
         // Choose replacement victim from replacement candidates
         CacheBlk* victim = static_cast<CacheBlk*>(replacementPolicy->getVictim(

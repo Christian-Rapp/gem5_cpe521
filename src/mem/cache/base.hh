@@ -991,6 +991,16 @@ class BaseCache : public ClockedObject
      * Normally this is all possible memory addresses. */
     const AddrRangeList addrRanges;
 
+    /**
+     * Records whether or not a replacement policy is active
+     */
+    bool repacementPolicyActive;
+
+    /**
+     * Records whether or not replacement policy is TSel
+     */
+    bool tSelPolicyActive;
+
   public:
     /** System we are currently operating in. */
     System *system;
@@ -1164,6 +1174,11 @@ class BaseCache : public ClockedObject
     ~BaseCache();
 
     void init() override;
+
+    BaseTags *getTags()
+    {
+        return tags;
+    }
 
     Port &getPort(const std::string &if_name,
                   PortID idx=InvalidPortID) override;
@@ -1502,6 +1517,7 @@ class WriteAllocator : public SimObject
      * WriteReq MSHR.
      */
     std::unordered_map<Addr, Counter> delayCtr;
+
 };
 
 } // namespace gem5
